@@ -1,34 +1,90 @@
-(defclass Contact ()
-  ((name :initarg :name :accessor contact-name)
-   (phone :initarg :phone :accessor contact-phone)))
+(defclass Registro ()
+  ((nome :accessor nome :initarg :nome)
+   (valor :accessor valor :initarg :valor)))
 
-(defvar *contacts* '())
+(defclass RegistroManager ()
+  ((registros :accessor registros :initform nil)))
 
-(defmethod create-contact ((name string) (phone string))
-  (push (make-instance 'contact :name name :phone phone) *contacts*))
+(defmethod adicionar-registro ((manager RegistroManager) nome valor)
+  (push (make-instance 'Registro :nome nome :valor valor) (registros manager)))
 
-(defmethod read-contacts ()
-  (mapcar #'list (mapcar #'contact-name *contacts*) (mapcar #'contact-phone *contacts*)))
+(defmethod listar-registros ((manager RegistroManager))
+  (format t "Registros cadastrados:~%")
+  (dolist (registro (registros manager))
+    (format t "Nome: ~a, Valor: ~a~%" (nome registro) (valor registro)))
 
-(defmethod update-contact ((old-name string) (new-name string) (new-phone string))
-  (dolist (contact *contacts*)
-    (when (string= (contact-name contact) old-name)
-      (setf (contact-name contact) new-name)
-      (setf (contact-phone contact) new-phone))))
+(defmethod buscar-registro ((manager RegistroManager) nome)
+  (find nome (registros manager) :key #'nome :test #'string=))
 
-(defmethod delete-contact ((name string))
-  (setf *contacts* (remove-if (lambda (contact) (string= (contact-name contact) name)) *contacts*)))
+(defmethod alterar-registro ((manager RegistroManager) nome novo-valor)
+  (let ((registro (buscar-registro manager nome)))
+    (if registro
+        (setf (valor registro) novo-valor)
+        (format t "Registro não encontrado.~%"))))
 
-;; Exemplos de uso
-(create-contact "João" "123-456-7890")
-(create-contact "Maria" "987-654-3210")
+(defmethod confirmar-exclusao ((manager RegistroManager) nome)
+  (if (find nome (registros manager) :key #'nome :test #'string=)
+      (format t "Confirma a exclusão do registro ~a? (S/N): " nome)
+      (format t "Registro não encontrado.~%")))
 
-(format t "Contatos: ~a~%" (read-contacts))
+(defmethod excluir-registro ((manager RegistroManager) nome)
+  (let ((registro (buscar-registro manager nome)))
+    (if registro
+        (progn
+          (setf (registros manager) (remove registro (registros manager)))
+          (format t "Registro ~a excluído.~%" nome))
+        (format t "Registro não encontrado.~%"))))
 
-(update-contact "João" "John" "555-555-5555")
+(defun menu ()
+  (let ((manager (make-instance 'RegistroManager)))
+    (loop
+      (format t "Menu Principal:~%")
+      (format t "1 - Cadastro~%")
+      (format t "2 - Alteração~%")
+      (format t "3 - Exclusão~%")
+      (format t "4 - Consulta~%")
+      (format t "5 - Relatório~%")
+      (format t "6 - Sair~%")
+      (format t "Escolha uma opção: ")
+      (let ((opcao (read)))
+        (case opcao
+          (1
+           (format t "Nome do registro: ")
+           (let ((nome (read-line)))
+             (format t "Valor do registro: ")
+             (let ((valor (read)))
+               (adicionar-registro manager nome valor)
+               (format t "Registro ~a cadastrado.~%" nome))))
+          (2
+           (format t "Nome do registro para alteração: ")
+           (let ((nome (read-line)))
+             (let ((registro (buscar-registro manager nome)))
+               (if registro
+                   (progn
+                     (format t "Registro ~a encontrado. Valor atual: ~a~%" nome (valor registro))
+                     (format t "Novo valor: ")
+                     (let ((novo-valor (read)))
+                       (alterar-registro manager nome novo-valor)
+                       (format t "Registro ~a alterado.~%" nome)))
+                   (format t "Registro não encontrado.~%")))))
+          (3
+           (format t "Nome do registro para exclusão: ")
+           (let ((nome (read-line)))
+             (format t "Aguarde...~%")
+             (let ((confirma (confirmar-exclusao manager nome)))
+               (let ((resposta (read-line)))
+                 (when (string= resposta "S")
+                   (excluir-registro manager nome))))))
+          (4
+           (format t "Nome do registro para consulta: ")
+           (let ((nome (read-line)))
+             (let ((registro (buscar-registro manager nome)))
+               (if registro
+                   (format t "Registro ~a encontrado. Valor: ~a~%" nome (valor registro))
+                   (format t "Registro não encontrado.~%"))))
+          (5
+           (listar-registros manager))
+          (6
+           (return)))))))
 
-(format t "Contatos após a atualização: ~a~%" (read-contacts))
-
-(delete-contact "Maria")
-
-(format t "Contatos após a exclusão: ~a~%" (read-contacts))
+(menu)
