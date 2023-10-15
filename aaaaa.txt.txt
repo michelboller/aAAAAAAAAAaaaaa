@@ -1,0 +1,34 @@
+(defvar *contacts* '())
+
+(defun create-contact (name phone)
+  (push (list :name name :phone phone) *contacts*))
+
+(defun read-contacts ()
+  *contacts*)
+
+(defun update-contact (old-name new-name new-phone)
+  (dolist (contact *contacts*)
+    (when (string= (getf contact :name) old-name)
+      (setf (getf contact :name) new-name)
+      (setf (getf contact :phone) new-phone))))
+
+(defun delete-contact (name)
+  (setf *contacts* (remove-if (lambda (contact) (string= (getf contact :name) name)) *contacts*)))
+
+;; Exemplos de uso
+(create-contact "João" "123-456-7890")
+(create-contact "Maria" "987-654-3210")
+
+(format t "Contatos após criação: ~a~%" (read-contacts))
+
+(update-contact "João" "John" "555-555-5555")
+
+(format t "Contatos após a atualização (joao foi atualizado): ~a~%" (read-contacts))
+
+(delete-contact "Maria")
+
+(format t "Contatos após a exclusão (Maria foi excluída): ~a~%" (read-contacts))
+
+
+
+;; https://rextester.com/l/common_lisp_online_compiler
