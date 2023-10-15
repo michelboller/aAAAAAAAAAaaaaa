@@ -1,34 +1,34 @@
+(defclass Contact ()
+  ((name :initarg :name :accessor contact-name)
+   (phone :initarg :phone :accessor contact-phone)))
+
 (defvar *contacts* '())
 
-(defun create-contact (name phone)
-  (push (list :name name :phone phone) *contacts*))
+(defmethod create-contact ((name string) (phone string))
+  (push (make-instance 'contact :name name :phone phone) *contacts*))
 
-(defun read-contacts ()
-  *contacts*)
+(defmethod read-contacts ()
+  (mapcar #'list (mapcar #'contact-name *contacts*) (mapcar #'contact-phone *contacts*)))
 
-(defun update-contact (old-name new-name new-phone)
+(defmethod update-contact ((old-name string) (new-name string) (new-phone string))
   (dolist (contact *contacts*)
-    (when (string= (getf contact :name) old-name)
-      (setf (getf contact :name) new-name)
-      (setf (getf contact :phone) new-phone))))
+    (when (string= (contact-name contact) old-name)
+      (setf (contact-name contact) new-name)
+      (setf (contact-phone contact) new-phone))))
 
-(defun delete-contact (name)
-  (setf *contacts* (remove-if (lambda (contact) (string= (getf contact :name) name)) *contacts*)))
+(defmethod delete-contact ((name string))
+  (setf *contacts* (remove-if (lambda (contact) (string= (contact-name contact) name)) *contacts*)))
 
 ;; Exemplos de uso
 (create-contact "João" "123-456-7890")
 (create-contact "Maria" "987-654-3210")
 
-(format t "Contatos após criação: ~a~%" (read-contacts))
+(format t "Contatos: ~a~%" (read-contacts))
 
 (update-contact "João" "John" "555-555-5555")
 
-(format t "Contatos após a atualização (joao foi atualizado): ~a~%" (read-contacts))
+(format t "Contatos após a atualização: ~a~%" (read-contacts))
 
 (delete-contact "Maria")
 
-(format t "Contatos após a exclusão (Maria foi excluída): ~a~%" (read-contacts))
-
-
-
-;; https://rextester.com/l/common_lisp_online_compiler
+(format t "Contatos após a exclusão: ~a~%" (read-contacts))
